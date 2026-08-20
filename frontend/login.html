@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BiblioTrack - Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f3a5f;
+        --primary-dark: #14253d;
+        --accent: #c9a227;
+        --bg: #f0f2f5;
+        --card-bg: #ffffff;
+        --text: #2a2a2a;
+        --muted: #6b7280;
+        --error: #d64545;
+        --success: #2f9e44;
+        --border: #e5e8ec;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .brand {
+        position: absolute;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: white;
+    }
+    .brand .logo { font-size: 40px; }
+    .brand h1 {
+        font-family: 'Merriweather', serif;
+        margin: 8px 0 0;
+        font-size: 24px;
+        letter-spacing: 1px;
+    }
+    .brand p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: #cdd6e0;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    .login-box {
+        background: var(--card-bg);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+        width: 340px;
+    }
+    h2 {
+        text-align: center;
+        color: var(--text);
+        font-weight: 600;
+        margin-top: 0;
+        margin-bottom: 20px;
+    }
+
+    /* Role toggle */
+    .role-toggle {
+        display: flex;
+        background-color: #eef1f5;
+        border-radius: 8px;
+        padding: 4px;
+        margin-bottom: 22px;
+    }
+    .role-toggle button {
+        flex: 1;
+        padding: 9px 0;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 0;
+    }
+    .role-toggle button.active {
+        background-color: var(--primary);
+        color: white;
+        box-shadow: 0 2px 6px rgba(31,58,95,0.3);
+    }
+
+    label {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+        margin-top: 14px;
+    }
+    input {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+    input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    button.submit-btn {
+        width: 100%;
+        padding: 12px;
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 22px;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: background-color 0.2s;
+    }
+    button.submit-btn:hover {
+        background-color: var(--primary-dark);
+    }
+    #message {
+        text-align: center;
+        margin-top: 14px;
+        font-size: 13px;
+        min-height: 16px;
+    }
+    .signup-link {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 13px;
+        color: var(--muted);
+    }
+    .signup-link a {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .signup-link a:hover {
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<div class="brand">
+    <div class="logo">📚</div>
+    <h1>BiblioTrack</h1>
+    <p>Library Management System</p>
+</div>
+
+<div class="login-box">
+    <h2>Welcome Back</h2>
+
+    <div class="role-toggle">
+        <button type="button" id="memberBtn" class="active" onclick="selectRole('MEMBER')">Member</button>
+        <button type="button" id="adminBtn" onclick="selectRole('ADMIN')">Admin</button>
+    </div>
+
+    <label>Username</label>
+    <input type="text" id="username" placeholder="Enter your username">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Enter your password">
+    <button class="submit-btn" onclick="login()">Log In</button>
+    <p id="message"></p>
+    <div class="signup-link">
+        Don't have an account? <a href="signup.html">Sign up</a>
+    </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8080";
+let selectedRole = "MEMBER";
+
+function selectRole(role) {
+    selectedRole = role;
+    document.getElementById("memberBtn").classList.toggle("active", role === "MEMBER");
+    document.getElementById("adminBtn").classList.toggle("active", role === "ADMIN");
+}
+
+async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const messageEl = document.getElementById("message");
+    messageEl.style.color = "#d64545";
+
+    if (!username || !password) {
+        messageEl.textContent = "Please enter both username and password.";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+
+        const result = await response.text();
+
+        if (result.startsWith("Login successful")) {
+            const roleMatch = result.match(/Role: (\w+)/);
+            const actualRole = roleMatch ? roleMatch[1] : "MEMBER";
+
+            if (actualRole !== selectedRole) {
+                messageEl.textContent = `This account is registered as ${actualRole}, not ${selectedRole}. Please select the correct option.`;
+                return;
+            }
+
+            sessionStorage.setItem("username", username);
+            sessionStorage.setItem("password", password);
+            sessionStorage.setItem("role", actualRole);
+
+            window.location.href = "dashboard.html";
+        } else {
+            messageEl.textContent = result;
+        }
+    } catch (err) {
+        messageEl.textContent = "Could not connect to server. Is the backend running?";
+    }
+}
+
+document.getElementById("password").addEventListener("keyup", function(e) {
+    if (e.key === "Enter") login();
+});
+</script>
+
+</body>
+</html>

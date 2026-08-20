@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BiblioTrack - Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f3a5f;
+        --primary-dark: #14253d;
+        --accent: #c9a227;
+        --bg: #f0f2f5;
+        --card-bg: #ffffff;
+        --text: #2a2a2a;
+        --muted: #6b7280;
+        --error: #d64545;
+        --success: #2f9e44;
+        --border: #e5e8ec;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg);
+        margin: 0;
+        padding: 24px;
+        color: var(--text);
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--primary);
+        color: white;
+        padding: 18px 28px;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        margin-bottom: 24px;
+    }
+    .header .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .header .brand .logo { font-size: 26px; }
+    .header h1 {
+        font-family: 'Merriweather', serif;
+        font-size: 20px;
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .badge {
+        background: var(--accent);
+        color: var(--primary-dark);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 12px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+    #logoutBtn {
+        background-color: rgba(255,255,255,0.15);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 8px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 13px;
+        transition: background-color 0.2s;
+    }
+    #logoutBtn:hover {
+        background-color: rgba(255,255,255,0.28);
+    }
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: var(--card-bg);
+        padding: 18px 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border-left: 4px solid var(--primary);
+    }
+    .stat-card .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1.1;
+    }
+    .stat-card .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+    .stat-card.accent { border-left-color: var(--accent); }
+    .stat-card.accent .stat-value { color: var(--accent); }
+    .card {
+        background: var(--card-bg);
+        padding: 24px;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        margin-bottom: 24px;
+    }
+    .card-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 12px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .card h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--primary);
+    }
+    .toggle-link {
+        font-size: 12px;
+        color: var(--primary);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: underline;
+        background: none;
+        border: none;
+        padding: 0;
+        font-family: inherit;
+    }
+    .filters-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .search-box {
+        position: relative;
+        width: 240px;
+    }
+    .search-box input {
+        width: 100%;
+        padding: 9px 12px 9px 34px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+    }
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    .search-box .icon {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 14px;
+        pointer-events: none;
+    }
+    .clear-search {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 15px;
+        display: none;
+        padding: 0;
+        line-height: 1;
+    }
+    .genre-select {
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+        background-color: white;
+        color: var(--text);
+        cursor: pointer;
+        min-width: 150px;
+    }
+    .genre-select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    .form-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .form-row input, .form-row select {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+        flex: 1;
+        min-width: 140px;
+    }
+    .form-row input:focus, .form-row select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    .form-row input[type="number"] {
+        flex: 0 0 90px;
+        min-width: 90px;
+    }
+    .btn-primary {
+        padding: 10px 20px;
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 13px;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+    }
+    .btn-primary:hover { background-color: var(--primary-dark); }
+    .btn-accent {
+        padding: 10px 20px;
+        background-color: var(--accent);
+        color: var(--primary-dark);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 13px;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+    }
+    .btn-accent:hover { opacity: 0.85; }
+    #statusMsg, #adminStatusMsg {
+        margin-top: 12px;
+        font-size: 13px;
+        min-height: 16px;
+    }
+    #resultCount {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 10px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th {
+        text-align: left;
+        padding: 10px 14px;
+        background-color: #f7f8fa;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border);
+    }
+    td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+        vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background-color: #fafbfc; }
+    .action-cell {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .delete-btn, .return-btn, .borrow-btn, .edit-btn, .save-btn, .cancel-btn {
+        border: none;
+        padding: 7px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 12px;
+        color: white;
+        transition: opacity 0.2s;
+    }
+    .delete-btn { background-color: var(--error); }
+    .return-btn { background-color: var(--success); }
+    .borrow-btn { background-color: var(--primary); }
+    .edit-btn { background-color: #5c6b7a; }
+    .save-btn { background-color: var(--success); }
+    .cancel-btn { background-color: #9aa2ab; }
+    .borrow-btn:disabled {
+        background-color: #b7bec7;
+        cursor: not-allowed;
+    }
+    .delete-btn:hover, .return-btn:hover, .borrow-btn:not(:disabled):hover,
+    .edit-btn:hover, .save-btn:hover, .cancel-btn:hover {
+        opacity: 0.85;
+    }
+    .status-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        background-color: #e8eef7;
+        color: var(--primary);
+    }
+    .genre-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        background-color: #eef2f7;
+        color: #4b5c70;
+    }
+    .role-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .role-pill.admin {
+        background-color: #fbeecb;
+        color: #8a6516;
+    }
+    .role-pill.member {
+        background-color: #e8eef7;
+        color: var(--primary);
+    }
+    .never-logged {
+        color: var(--muted);
+        font-style: italic;
+        font-size: 13px;
+    }
+    .empty-state {
+        text-align: center;
+        color: var(--muted);
+        padding: 20px;
+        font-size: 13px;
+    }
+    .qty-good { color: var(--success); font-weight: 600; }
+    .qty-low { color: var(--error); font-weight: 600; }
+    mark {
+        background-color: #fdf0c4;
+        color: inherit;
+        padding: 0 1px;
+        border-radius: 2px;
+    }
+    .edit-input {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid var(--primary);
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 13px;
+        box-sizing: border-box;
+    }
+    .edit-input.qty-input {
+        width: 60px;
+    }
+    tr.editing-row td {
+        background-color: #f5f8fc;
+    }
+    .create-admin-box {
+        background-color: #fdf7e8;
+        border: 1px dashed var(--accent);
+        border-radius: 8px;
+        padding: 18px;
+        margin-top: 14px;
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="brand">
+        <span class="logo">📚</span>
+        <h1>BiblioTrack</h1>
+    </div>
+    <div class="user-info">
+        <span id="welcomeMsg"></span>
+        <span class="badge" id="roleBadge"></span>
+        <button id="logoutBtn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<div class="stats-row" id="statsRow" style="display:none;">
+    <div class="stat-card">
+        <div class="stat-value" id="totalUsersStat">-</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="totalMembersStat">-</div>
+        <div class="stat-label">Members</div>
+    </div>
+    <div class="stat-card accent">
+        <div class="stat-value" id="totalAdminsStat">-</div>
+        <div class="stat-label">Admins</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="totalBooksStat">-</div>
+        <div class="stat-label">Books in Catalog</div>
+    </div>
+</div>
+
+<div class="card" id="adminPanel" style="display:none;">
+    <h3>Add New Book</h3>
+    <div class="form-row" style="margin-top: 14px;">
+        <input type="text" id="title" placeholder="Title">
+        <input type="text" id="author" placeholder="Author">
+        <input type="text" id="isbn" placeholder="ISBN">
+        <input type="text" id="genre" placeholder="Genre (e.g. Fiction)">
+        <input type="number" id="quantity" placeholder="Qty" value="1" min="1">
+        <button class="btn-primary" onclick="addBook()">Add Book</button>
+    </div>
+    <p id="statusMsg"></p>
+</div>
+
+<div class="card" id="usersPanel" style="display:none;">
+    <div class="card-header-row">
+        <h3>Registered Users</h3>
+        <button class="toggle-link" onclick="toggleCreateAdmin()" id="toggleCreateAdminBtn">+ Create New Admin</button>
+    </div>
+
+    <div class="create-admin-box" id="createAdminBox" style="display:none;">
+        <div class="form-row">
+            <input type="text" id="newAdminUsername" placeholder="Username">
+            <input type="email" id="newAdminEmail" placeholder="Email">
+            <input type="password" id="newAdminPassword" placeholder="Password (min 6 chars)">
+            <button class="btn-accent" onclick="createAdmin()">Create Admin</button>
+        </div>
+        <p id="adminStatusMsg"></p>
+    </div>
+
+    <table style="margin-top: 14px;">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Last Login</th>
+            </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+    </table>
+</div>
+
+<div class="card" id="myBooksPanel" style="display:none;">
+    <h3>My Borrowed Books</h3>
+    <table style="margin-top: 14px;">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Borrow Date</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="myBooksTableBody"></tbody>
+    </table>
+</div>
+
+<div class="card">
+    <div class="card-header-row">
+        <h3>Book Catalog</h3>
+        <div class="filters-group">
+            <select class="genre-select" id="genreFilter" onchange="handleFilters()">
+                <option value="">All Genres</option>
+            </select>
+            <div class="search-box">
+                <span class="icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search by title or author..." oninput="handleFilters()">
+                <button class="clear-search" id="clearSearchBtn" onclick="clearSearch()">✕</button>
+            </div>
+        </div>
+    </div>
+    <p id="resultCount"></p>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Genre</th>
+                <th>ISBN</th>
+                <th>Available / Total</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="booksTableBody"></tbody>
+    </table>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8080";
+const username = sessionStorage.getItem("username");
+const password = sessionStorage.getItem("password");
+const role = sessionStorage.getItem("role");
+let currentUserId = null;
+let allBooks = [];
+let allUsers = [];
+let editingBookId = null;
+
+if (!username || !password) {
+    window.location.href = "login.html";
+}
+
+document.getElementById("welcomeMsg").textContent = username;
+document.getElementById("roleBadge").textContent = role;
+
+if (role === "ADMIN") {
+    document.getElementById("adminPanel").style.display = "block";
+    document.getElementById("usersPanel").style.display = "block";
+    document.getElementById("statsRow").style.display = "grid";
+}
+if (role === "MEMBER") {
+    document.getElementById("myBooksPanel").style.display = "block";
+}
+
+function getAuthHeader() {
+    return "Basic " + btoa(`${username}:${password}`);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function highlightMatch(text, query) {
+    if (!query) return escapeHtml(text);
+    const escaped = escapeHtml(text);
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, "gi");
+    return escaped.replace(regex, "<mark>$1</mark>");
+}
+
+function formatLastLogin(value) {
+    if (!value) return `<span class="never-logged">Never logged in</span>`;
+    const date = new Date(value);
+    return date.toLocaleString(undefined, {
+        year: "numeric", month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit"
+    });
+}
+
+function toggleCreateAdmin() {
+    const box = document.getElementById("createAdminBox");
+    const isHidden = box.style.display === "none";
+    box.style.display = isHidden ? "block" : "none";
+    document.getElementById("toggleCreateAdminBtn").textContent = isHidden ? "− Cancel" : "+ Create New Admin";
+}
+
+async function createAdmin() {
+    const newUsername = document.getElementById("newAdminUsername").value.trim();
+    const newEmail = document.getElementById("newAdminEmail").value.trim();
+    const newPassword = document.getElementById("newAdminPassword").value;
+    const statusMsg = document.getElementById("adminStatusMsg");
+
+    statusMsg.style.color = "#d64545";
+
+    if (!newUsername || !newEmail || !newPassword) {
+        statusMsg.textContent = "All fields are required.";
+        return;
+    }
+    if (newPassword.length < 6) {
+        statusMsg.textContent = "Password must be at least 6 characters.";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/users/create-admin`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": getAuthHeader()
+            },
+            body: JSON.stringify({ username: newUsername, email: newEmail, password: newPassword })
+        });
+
+        if (response.ok) {
+            statusMsg.style.color = "#2f9e44";
+            statusMsg.textContent = `Admin account "${newUsername}" created successfully!`;
+            document.getElementById("newAdminUsername").value = "";
+            document.getElementById("newAdminEmail").value = "";
+            document.getElementById("newAdminPassword").value = "";
+            await loadUsers();
+            renderUserStatsAndTable();
+        } else {
+            const data = await response.json().catch(() => null);
+            if (data && data.error) {
+                statusMsg.textContent = data.error;
+            } else if (data) {
+                const firstMsg = Object.values(data)[0];
+                statusMsg.textContent = firstMsg || "Failed to create admin account.";
+            } else {
+                statusMsg.textContent = "Failed to create admin account.";
+            }
+        }
+    } catch (err) {
+        statusMsg.textContent = "Error connecting to server.";
+    }
+}
+
+async function loadUsers() {
+    try {
+        const response = await fetch(`${API_BASE}/api/users`, {
+            headers: { "Authorization": getAuthHeader() }
+        });
+        if (!response.ok) return null;
+        allUsers = await response.json();
+        return allUsers;
+    } catch (err) {
+        return null;
+    }
+}
+
+async function findCurrentUserId() {
+    const users = allUsers.length ? allUsers : await loadUsers();
+    if (!users) return null;
+    const me = users.find(u => u.username === username);
+    return me ? me.id : null;
+}
+
+function renderUserStatsAndTable() {
+    if (role !== "ADMIN") return;
+
+    const members = allUsers.filter(u => u.role === "MEMBER");
+    const admins = allUsers.filter(u => u.role === "ADMIN");
+
+    document.getElementById("totalUsersStat").textContent = allUsers.length;
+    document.getElementById("totalMembersStat").textContent = members.length;
+    document.getElementById("totalAdminsStat").textContent = admins.length;
+    document.getElementById("totalBooksStat").textContent = allBooks.length;
+
+    const tbody = document.getElementById("usersTableBody");
+    tbody.innerHTML = "";
+
+    if (allUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No registered users.</td></tr>`;
+        return;
+    }
+
+    const sorted = [...allUsers].sort((a, b) => {
+        if (!a.lastLogin && !b.lastLogin) return 0;
+        if (!a.lastLogin) return 1;
+        if (!b.lastLogin) return -1;
+        return new Date(b.lastLogin) - new Date(a.lastLogin);
+    });
+
+    sorted.forEach(u => {
+        const row = document.createElement("tr");
+        const roleClass = u.role === "ADMIN" ? "admin" : "member";
+        row.innerHTML = `
+            <td>${escapeHtml(u.username)}</td>
+            <td>${escapeHtml(u.email)}</td>
+            <td><span class="role-pill ${roleClass}">${u.role}</span></td>
+            <td>${formatLastLogin(u.lastLogin)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function populateGenreDropdown() {
+    const select = document.getElementById("genreFilter");
+    const currentValue = select.value;
+
+    const genres = [...new Set(allBooks
+        .map(b => b.genre)
+        .filter(g => g && g.trim() !== "")
+    )].sort();
+
+    select.innerHTML = `<option value="">All Genres</option>`;
+    genres.forEach(g => {
+        const opt = document.createElement("option");
+        opt.value = g;
+        opt.textContent = g;
+        select.appendChild(opt);
+    });
+
+    if (genres.includes(currentValue)) {
+        select.value = currentValue;
+    }
+}
+
+async function loadBooks() {
+    try {
+        const response = await fetch(`${API_BASE}/api/books`, {
+            headers: { "Authorization": getAuthHeader() }
+        });
+        if (!response.ok) throw new Error("Failed to load books");
+
+        allBooks = await response.json();
+        editingBookId = null;
+        populateGenreDropdown();
+        handleFilters();
+
+        if (role === "ADMIN") {
+            document.getElementById("totalBooksStat").textContent = allBooks.length;
+        }
+    } catch (err) {
+        alert("Could not load books. You may need to log in again.");
+        logout();
+    }
+}
+
+function applyFilterAndRender() {
+    const query = document.getElementById("searchInput").value.trim();
+    const genre = document.getElementById("genreFilter").value;
+
+    let filtered = allBooks;
+
+    if (genre) {
+        filtered = filtered.filter(book => book.genre === genre);
+    }
+
+    if (query) {
+        const lowerQuery = query.toLowerCase();
+        filtered = filtered.filter(book =>
+            book.title.toLowerCase().includes(lowerQuery) ||
+            book.author.toLowerCase().includes(lowerQuery)
+        );
+    }
+
+    renderBooks(filtered, query);
+}
+
+function renderBooks(books, query) {
+    const tbody = document.getElementById("booksTableBody");
+    const resultCount = document.getElementById("resultCount");
+    const genre = document.getElementById("genreFilter").value;
+    tbody.innerHTML = "";
+
+    if (query || genre) {
+        let label = [];
+        if (query) label.push(`"${query}"`);
+        if (genre) label.push(`genre "${genre}"`);
+        resultCount.textContent = `${books.length} result${books.length !== 1 ? "s" : ""} for ${label.join(" in ")}`;
+    } else {
+        resultCount.textContent = "";
+    }
+
+    if (books.length === 0) {
+        const msg = (query || genre) ? `No books match your filters.` : "No books in the catalog yet.";
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${msg}</td></tr>`;
+        return;
+    }
+
+    books.forEach(book => {
+        const row = document.createElement("tr");
+        row.id = `book-row-${book.id}`;
+
+        if (editingBookId === book.id) {
+            row.classList.add("editing-row");
+            row.innerHTML = `
+                <td>${book.id}</td>
+                <td><input class="edit-input" id="edit-title-${book.id}" value="${escapeHtml(book.title)}"></td>
+                <td><input class="edit-input" id="edit-author-${book.id}" value="${escapeHtml(book.author)}"></td>
+                <td><input class="edit-input" id="edit-genre-${book.id}" value="${book.genre ? escapeHtml(book.genre) : ''}"></td>
+                <td><input class="edit-input" id="edit-isbn-${book.id}" value="${book.isbn ? escapeHtml(book.isbn) : ''}"></td>
+                <td>
+                    <input class="edit-input qty-input" type="number" min="0" id="edit-quantity-${book.id}" value="${book.quantity}">
+                </td>
+                <td class="action-cell">
+                    <button class="save-btn" onclick="saveBook(${book.id})">Save</button>
+                    <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            return;
+        }
+
+        let actionCell = "";
+        const qtyClass = book.availableQuantity > 0 ? "qty-good" : "qty-low";
+
+        if (role === "ADMIN") {
+            actionCell = `
+                <td class="action-cell">
+                    <button class="edit-btn" onclick="startEdit(${book.id})">Edit</button>
+                    <button class="delete-btn" onclick="deleteBook(${book.id})">Delete</button>
+                </td>`;
+        } else if (role === "MEMBER") {
+            const disabled = book.availableQuantity <= 0 ? "disabled" : "";
+            actionCell = `<td><button class="borrow-btn" ${disabled} onclick="borrowBook(${book.id})">Borrow</button></td>`;
+        } else {
+            actionCell = `<td>-</td>`;
+        }
+
+        row.innerHTML = `
+            <td>${book.id}</td>
+            <td>${highlightMatch(book.title, query)}</td>
+            <td>${highlightMatch(book.author, query)}</td>
+            <td>${book.genre ? `<span class="genre-pill">${escapeHtml(book.genre)}</span>` : "-"}</td>
+            <td>${book.isbn ? escapeHtml(book.isbn) : "-"}</td>
+            <td class="${qtyClass}">${book.availableQuantity} / ${book.quantity}</td>
+            ${actionCell}
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function startEdit(bookId) {
+    editingBookId = bookId;
+    applyFilterAndRender();
+}
+
+function cancelEdit() {
+    editingBookId = null;
+    applyFilterAndRender();
+}
+
+async function saveBook(bookId) {
+    const book = allBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    const newTitle = document.getElementById(`edit-title-${bookId}`).value.trim();
+    const newAuthor = document.getElementById(`edit-author-${bookId}`).value.trim();
+    const newGenre = document.getElementById(`edit-genre-${bookId}`).value.trim();
+    const newIsbn = document.getElementById(`edit-isbn-${bookId}`).value.trim();
+    const newQuantity = parseInt(document.getElementById(`edit-quantity-${bookId}`).value);
+
+    if (!newTitle || !newAuthor) {
+        alert("Title and Author cannot be empty.");
+        return;
+    }
+    if (isNaN(newQuantity) || newQuantity < 0) {
+        alert("Quantity must be a valid non-negative number.");
+        return;
+    }
+
+    const borrowedCount = book.quantity - book.availableQuantity;
+    const newAvailableQuantity = Math.max(0, newQuantity - borrowedCount);
+
+    try {
+        const response = await fetch(`${API_BASE}/api/books/${bookId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": getAuthHeader()
+            },
+            body: JSON.stringify({
+                title: newTitle,
+                author: newAuthor,
+                isbn: newIsbn,
+                genre: newGenre,
+                quantity: newQuantity,
+                availableQuantity: newAvailableQuantity
+            })
+        });
+
+        if (response.ok) {
+            editingBookId = null;
+            await loadBooks();
+        } else {
+            alert("Failed to update book. ISBN may already be in use.");
+        }
+    } catch (err) {
+        alert("Error connecting to server.");
+    }
+}
+
+function handleFilters() {
+    const query = document.getElementById("searchInput").value.trim();
+    document.getElementById("clearSearchBtn").style.display = query ? "block" : "none";
+    editingBookId = null;
+    applyFilterAndRender();
+}
+
+function clearSearch() {
+    document.getElementById("searchInput").value = "";
+    document.getElementById("clearSearchBtn").style.display = "none";
+    editingBookId = null;
+    applyFilterAndRender();
+}
+
+async function loadMyBorrowedBooks() {
+    if (role !== "MEMBER") return;
+
+    try {
+        const response = await fetch(`${API_BASE}/api/borrow`, {
+            headers: { "Authorization": getAuthHeader() }
+        });
+        if (!response.ok) return;
+
+        const records = await response.json();
+        const myRecords = records.filter(r => r.user.id === currentUserId && r.status === "BORROWED");
+
+        const tbody = document.getElementById("myBooksTableBody");
+        tbody.innerHTML = "";
+
+        if (myRecords.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No books currently borrowed.</td></tr>`;
+            return;
+        }
+
+        myRecords.forEach(record => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${escapeHtml(record.book.title)}</td>
+                <td>${record.borrowDate}</td>
+                <td>${record.dueDate}</td>
+                <td><span class="status-pill">${record.status}</span></td>
+                <td><button class="return-btn" onclick="returnBook(${record.id})">Return</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (err) {
+        console.error("Could not load borrowed books", err);
+    }
+}
+
+async function borrowBook(bookId) {
+    if (!currentUserId) {
+        alert("Could not determine your user ID. Please log in again.");
+        return;
+    }
+    try {
+        const response = await fetch(`${API_BASE}/api/borrow/borrow?userId=${currentUserId}&bookId=${bookId}`, {
+            method: "POST",
+            headers: { "Authorization": getAuthHeader() }
+        });
+        if (response.ok) {
+            await loadBooks();
+            loadMyBorrowedBooks();
+        } else {
+            const errorText = await response.text();
+            alert("Failed to borrow book: " + errorText);
+        }
+    } catch (err) {
+        alert("Error connecting to server.");
+    }
+}
+
+async function returnBook(recordId) {
+    try {
+        const response = await fetch(`${API_BASE}/api/borrow/return/${recordId}`, {
+            method: "PUT",
+            headers: { "Authorization": getAuthHeader() }
+        });
+        if (response.ok) {
+            await loadBooks();
+            loadMyBorrowedBooks();
+        } else {
+            alert("Failed to return book.");
+        }
+    } catch (err) {
+        alert("Error connecting to server.");
+    }
+}
+
+async function addBook() {
+    const title = document.getElementById("title").value;
+    const author = document.getElementById("author").value;
+    const isbn = document.getElementById("isbn").value;
+    const genre = document.getElementById("genre").value;
+    const quantity = parseInt(document.getElementById("quantity").value) || 1;
+    const statusMsg = document.getElementById("statusMsg");
+
+    if (!title || !author) {
+        statusMsg.style.color = "#d64545";
+        statusMsg.textContent = "Title and Author are required.";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/books`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": getAuthHeader()
+            },
+            body: JSON.stringify({ title, author, isbn, genre, quantity, availableQuantity: quantity })
+        });
+
+        if (response.ok) {
+            statusMsg.style.color = "#2f9e44";
+            statusMsg.textContent = "Book added successfully!";
+            document.getElementById("title").value = "";
+            document.getElementById("author").value = "";
+            document.getElementById("isbn").value = "";
+            document.getElementById("genre").value = "";
+            document.getElementById("quantity").value = "1";
+            await loadBooks();
+        } else {
+            statusMsg.style.color = "#d64545";
+            statusMsg.textContent = "Failed to add book (check for duplicate ISBN).";
+        }
+    } catch (err) {
+        statusMsg.style.color = "#d64545";
+        statusMsg.textContent = "Error connecting to server.";
+    }
+}
+
+async function deleteBook(id) {
+    if (!confirm("Are you sure you want to delete this book?")) return;
+    try {
+        const response = await fetch(`${API_BASE}/api/books/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": getAuthHeader() }
+        });
+        if (response.ok) {
+            await loadBooks();
+        } else {
+            alert("Failed to delete book.");
+        }
+    } catch (err) {
+        alert("Error connecting to server.");
+    }
+}
+
+function logout() {
+    sessionStorage.clear();
+    window.location.href = "login.html";
+}
+
+async function init() {
+    if (role === "ADMIN") {
+        await loadUsers();
+        renderUserStatsAndTable();
+    }
+    if (role === "MEMBER") {
+        currentUserId = await findCurrentUserId();
+    }
+    await loadBooks();
+    if (role === "ADMIN") {
+        renderUserStatsAndTable();
+    }
+    await loadMyBorrowedBooks();
+}
+
+init();
+</script>
+
+</body>
+</html>

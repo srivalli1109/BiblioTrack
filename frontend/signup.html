@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BiblioTrack - Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #1f3a5f;
+        --primary-dark: #14253d;
+        --accent: #c9a227;
+        --text: #2a2a2a;
+        --muted: #6b7280;
+        --error: #d64545;
+        --success: #2f9e44;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 40px 0;
+    }
+    .brand {
+        position: absolute;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: white;
+    }
+    .brand .logo { font-size: 40px; }
+    .brand h1 {
+        font-family: 'Merriweather', serif;
+        margin: 8px 0 0;
+        font-size: 24px;
+        letter-spacing: 1px;
+    }
+    .brand p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: #cdd6e0;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    .signup-box {
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+        width: 340px;
+        margin-top: 100px;
+    }
+    h2 {
+        text-align: center;
+        color: var(--text);
+        font-weight: 600;
+        margin-top: 0;
+    }
+    label {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+        margin-top: 14px;
+    }
+    input {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #d8dce1;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+    input.field-error {
+        border-color: var(--error);
+    }
+    input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    .field-msg {
+        font-size: 11px;
+        color: var(--error);
+        margin-top: 3px;
+        min-height: 14px;
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 22px;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: background-color 0.2s;
+    }
+    button:hover {
+        background-color: var(--primary-dark);
+    }
+    #message {
+        text-align: center;
+        margin-top: 14px;
+        font-size: 13px;
+        min-height: 16px;
+    }
+    .login-link {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 13px;
+        color: var(--muted);
+    }
+    .login-link a {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<div class="brand">
+    <div class="logo">📚</div>
+    <h1>BiblioTrack</h1>
+    <p>Library Management System</p>
+</div>
+
+<div class="signup-box">
+    <h2>Create Account</h2>
+    <label>Username</label>
+    <input type="text" id="username" placeholder="Choose a username">
+    <div class="field-msg" id="usernameMsg"></div>
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com">
+    <div class="field-msg" id="emailMsg"></div>
+
+    <label>Password</label>
+    <input type="password" id="password" placeholder="At least 6 characters">
+    <div class="field-msg" id="passwordMsg"></div>
+
+    <label>Confirm Password</label>
+    <input type="password" id="confirmPassword" placeholder="Re-enter password">
+    <div class="field-msg" id="confirmPasswordMsg"></div>
+
+    <button onclick="signup()">Sign Up</button>
+    <p id="message"></p>
+    <div class="login-link">
+        Already have an account? <a href="login.html">Log in</a>
+    </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8080";
+
+function clearFieldErrors() {
+    ["username", "email", "password", "confirmPassword"].forEach(f => {
+        document.getElementById(f).classList.remove("field-error");
+        document.getElementById(f + "Msg").textContent = "";
+    });
+}
+
+async function signup() {
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    const messageEl = document.getElementById("message");
+
+    clearFieldErrors();
+    messageEl.style.color = "#d64545";
+    messageEl.textContent = "";
+
+    let hasClientError = false;
+
+    if (!username) {
+        setFieldError("username", "Username is required.");
+        hasClientError = true;
+    }
+    if (!email) {
+        setFieldError("email", "Email is required.");
+        hasClientError = true;
+    }
+    if (!password) {
+        setFieldError("password", "Password is required.");
+        hasClientError = true;
+    }
+    if (password && confirmPassword && password !== confirmPassword) {
+        setFieldError("confirmPassword", "Passwords do not match.");
+        hasClientError = true;
+    }
+
+    if (hasClientError) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/api/users`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, email, password, role: "MEMBER" })
+        });
+
+        if (response.ok) {
+            messageEl.style.color = "#2f9e44";
+            messageEl.textContent = "Account created! Redirecting to login...";
+            setTimeout(() => { window.location.href = "login.html"; }, 1500);
+            return;
+        }
+
+        // Try to parse structured error response from backend
+        const data = await response.json().catch(() => null);
+
+        if (data && data.error) {
+            // Duplicate entry or generic runtime error
+            messageEl.textContent = data.error;
+        } else if (data) {
+            // Field-level validation errors (username, email, password)
+            let shown = false;
+            for (const field of ["username", "email", "password"]) {
+                if (data[field]) {
+                    setFieldError(field, data[field]);
+                    shown = true;
+                }
+            }
+            if (!shown) {
+                messageEl.textContent = "Signup failed. Please check your details.";
+            }
+        } else {
+            messageEl.textContent = "Signup failed. Please try again.";
+        }
+    } catch (err) {
+        messageEl.textContent = "Could not connect to server. Is the backend running?";
+    }
+}
+
+function setFieldError(field, msg) {
+    document.getElementById(field).classList.add("field-error");
+    document.getElementById(field + "Msg").textContent = msg;
+}
+</script>
+
+</body>
+</html>
