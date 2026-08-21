@@ -289,7 +289,7 @@
         gap: 6px;
         flex-wrap: wrap;
     }
-    .delete-btn, .return-btn, .borrow-btn, .edit-btn, .save-btn, .cancel-btn {
+    .delete-btn, .return-btn, .borrow-btn, .edit-btn, .save-btn, .cancel-btn, .review-btn {
         border: none;
         padding: 7px 14px;
         border-radius: 6px;
@@ -306,12 +306,13 @@
     .edit-btn { background-color: #5c6b7a; }
     .save-btn { background-color: var(--success); }
     .cancel-btn { background-color: #9aa2ab; }
+    .review-btn { background-color: var(--accent); color: var(--primary-dark); }
     .borrow-btn:disabled {
         background-color: #b7bec7;
         cursor: not-allowed;
     }
     .delete-btn:hover, .return-btn:hover, .borrow-btn:not(:disabled):hover,
-    .edit-btn:hover, .save-btn:hover, .cancel-btn:hover {
+    .edit-btn:hover, .save-btn:hover, .cancel-btn:hover, .review-btn:hover {
         opacity: 0.85;
     }
     .status-pill {
@@ -390,6 +391,108 @@
         padding: 18px;
         margin-top: 14px;
     }
+    .stars {
+        color: var(--accent);
+        font-size: 14px;
+        letter-spacing: 1px;
+    }
+    .stars .empty-star { color: #d8dce1; }
+    .rating-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .rating-count {
+        font-size: 11px;
+        color: var(--muted);
+    }
+    .trending-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+    .trending-card {
+        background: #fdfaf0;
+        border: 1px solid #f0e4bc;
+        border-radius: 8px;
+        padding: 14px 16px;
+        min-width: 200px;
+        flex: 1;
+    }
+    .trending-card .trending-rank {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .trending-card .trending-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 4px 0 2px;
+        color: var(--text);
+    }
+    .trending-card .trending-author {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(20, 37, 61, 0.55);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+        background: white;
+        border-radius: 10px;
+        padding: 24px;
+        width: 420px;
+        max-width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .modal-box h3 {
+        margin-top: 0;
+        color: var(--primary);
+    }
+    .modal-close {
+        float: right;
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: var(--muted);
+    }
+    .star-picker {
+        font-size: 26px;
+        cursor: pointer;
+        color: #d8dce1;
+        user-select: none;
+    }
+    .star-picker span.selected {
+        color: var(--accent);
+    }
+    .review-item {
+        border-bottom: 1px solid var(--border);
+        padding: 10px 0;
+    }
+    .review-item:last-child { border-bottom: none; }
+    .review-item .review-user {
+        font-weight: 600;
+        font-size: 13px;
+    }
+    .review-item .review-comment {
+        font-size: 13px;
+        color: var(--text);
+        margin-top: 2px;
+    }
 </style>
 </head>
 <body>
@@ -423,6 +526,11 @@
         <div class="stat-value" id="totalBooksStat">-</div>
         <div class="stat-label">Books in Catalog</div>
     </div>
+</div>
+
+<div class="card" id="trendingPanel" style="display:none;">
+    <h3>🔥 Trending Books</h3>
+    <div class="trending-list" id="trendingList" style="margin-top: 14px;"></div>
 </div>
 
 <div class="card" id="adminPanel" style="display:none;">
@@ -505,6 +613,7 @@
                 <th>Title</th>
                 <th>Author</th>
                 <th>Genre</th>
+                <th>Rating</th>
                 <th>ISBN</th>
                 <th>Available / Total</th>
                 <th>Action</th>
@@ -512,6 +621,27 @@
         </thead>
         <tbody id="booksTableBody"></tbody>
     </table>
+</div>
+
+<!-- Review Modal -->
+<div class="modal-overlay" id="reviewModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeReviewModal()">✕</button>
+        <h3 id="reviewModalTitle">Reviews</h3>
+
+        <div id="reviewFormSection" style="display:none;">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">Your rating:</p>
+            <div class="star-picker" id="starPicker">
+                <span data-value="1">★</span><span data-value="2">★</span><span data-value="3">★</span><span data-value="4">★</span><span data-value="5">★</span>
+            </div>
+            <textarea id="reviewComment" placeholder="Write a short review (optional)" style="width:100%; margin-top:10px; padding:8px; border:1px solid var(--border); border-radius:6px; font-family:inherit; font-size:13px; min-height:60px;"></textarea>
+            <button class="btn-accent" style="margin-top:10px;" onclick="submitReview()">Submit Review</button>
+            <p id="reviewFormMsg" style="font-size:12px; margin-top:6px;"></p>
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
+        </div>
+
+        <div id="reviewsList"></div>
+    </div>
 </div>
 
 <script>
@@ -523,6 +653,9 @@ let currentUserId = null;
 let allBooks = [];
 let allUsers = [];
 let editingBookId = null;
+let bookRatings = {}; // bookId -> { averageRating, totalReviews }
+let currentReviewBookId = null;
+let selectedStarRating = 0;
 
 if (!username || !password) {
     window.location.href = "login.html";
@@ -565,6 +698,15 @@ function formatLastLogin(value) {
         year: "numeric", month: "short", day: "numeric",
         hour: "2-digit", minute: "2-digit"
     });
+}
+
+function starHtml(avg) {
+    let html = '<span class="stars">';
+    for (let i = 1; i <= 5; i++) {
+        html += i <= Math.round(avg) ? "★" : '<span class="empty-star">★</span>';
+    }
+    html += "</span>";
+    return html;
 }
 
 function toggleCreateAdmin() {
@@ -706,6 +848,54 @@ function populateGenreDropdown() {
     }
 }
 
+async function loadAllRatings() {
+    bookRatings = {};
+    await Promise.all(allBooks.map(async (book) => {
+        try {
+            const response = await fetch(`${API_BASE}/api/reviews/book/${book.id}/average`, {
+                headers: { "Authorization": getAuthHeader() }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                bookRatings[book.id] = data;
+            }
+        } catch (err) {
+            // ignore individual failures
+        }
+    }));
+}
+
+function renderTrending() {
+    const withReviews = Object.entries(bookRatings)
+        .filter(([id, r]) => r.totalReviews > 0)
+        .map(([id, r]) => ({ book: allBooks.find(b => b.id === parseInt(id)), ...r }))
+        .filter(x => x.book)
+        .sort((a, b) => (b.averageRating * Math.log(b.totalReviews + 1)) - (a.averageRating * Math.log(a.totalReviews + 1)))
+        .slice(0, 3);
+
+    const panel = document.getElementById("trendingPanel");
+    const list = document.getElementById("trendingList");
+
+    if (withReviews.length === 0) {
+        panel.style.display = "none";
+        return;
+    }
+
+    panel.style.display = "block";
+    list.innerHTML = "";
+    withReviews.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "trending-card";
+        card.innerHTML = `
+            <div class="trending-rank">#${index + 1} Trending</div>
+            <div class="trending-title">${escapeHtml(item.book.title)}</div>
+            <div class="trending-author">by ${escapeHtml(item.book.author)}</div>
+            ${starHtml(item.averageRating)} <span class="rating-count">(${item.totalReviews})</span>
+        `;
+        list.appendChild(card);
+    });
+}
+
 async function loadBooks() {
     try {
         const response = await fetch(`${API_BASE}/api/books`, {
@@ -716,7 +906,9 @@ async function loadBooks() {
         allBooks = await response.json();
         editingBookId = null;
         populateGenreDropdown();
+        await loadAllRatings();
         handleFilters();
+        renderTrending();
 
         if (role === "ADMIN") {
             document.getElementById("totalBooksStat").textContent = allBooks.length;
@@ -765,7 +957,7 @@ function renderBooks(books, query) {
 
     if (books.length === 0) {
         const msg = (query || genre) ? `No books match your filters.` : "No books in the catalog yet.";
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${msg}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${msg}</td></tr>`;
         return;
     }
 
@@ -780,6 +972,7 @@ function renderBooks(books, query) {
                 <td><input class="edit-input" id="edit-title-${book.id}" value="${escapeHtml(book.title)}"></td>
                 <td><input class="edit-input" id="edit-author-${book.id}" value="${escapeHtml(book.author)}"></td>
                 <td><input class="edit-input" id="edit-genre-${book.id}" value="${book.genre ? escapeHtml(book.genre) : ''}"></td>
+                <td>-</td>
                 <td><input class="edit-input" id="edit-isbn-${book.id}" value="${book.isbn ? escapeHtml(book.isbn) : ''}"></td>
                 <td>
                     <input class="edit-input qty-input" type="number" min="0" id="edit-quantity-${book.id}" value="${book.quantity}">
@@ -795,16 +988,25 @@ function renderBooks(books, query) {
 
         let actionCell = "";
         const qtyClass = book.availableQuantity > 0 ? "qty-good" : "qty-low";
+        const rating = bookRatings[book.id];
+        const ratingCell = rating && rating.totalReviews > 0
+            ? `<div class="rating-cell">${starHtml(rating.averageRating)}<span class="rating-count">${rating.averageRating} (${rating.totalReviews})</span></div>`
+            : `<span class="rating-count">No reviews yet</span>`;
 
         if (role === "ADMIN") {
             actionCell = `
                 <td class="action-cell">
                     <button class="edit-btn" onclick="startEdit(${book.id})">Edit</button>
                     <button class="delete-btn" onclick="deleteBook(${book.id})">Delete</button>
+                    <button class="review-btn" onclick="openReviewModal(${book.id})">Reviews</button>
                 </td>`;
         } else if (role === "MEMBER") {
             const disabled = book.availableQuantity <= 0 ? "disabled" : "";
-            actionCell = `<td><button class="borrow-btn" ${disabled} onclick="borrowBook(${book.id})">Borrow</button></td>`;
+            actionCell = `
+                <td class="action-cell">
+                    <button class="borrow-btn" ${disabled} onclick="borrowBook(${book.id})">Borrow</button>
+                    <button class="review-btn" onclick="openReviewModal(${book.id})">Review</button>
+                </td>`;
         } else {
             actionCell = `<td>-</td>`;
         }
@@ -814,6 +1016,7 @@ function renderBooks(books, query) {
             <td>${highlightMatch(book.title, query)}</td>
             <td>${highlightMatch(book.author, query)}</td>
             <td>${book.genre ? `<span class="genre-pill">${escapeHtml(book.genre)}</span>` : "-"}</td>
+            <td>${ratingCell}</td>
             <td>${book.isbn ? escapeHtml(book.isbn) : "-"}</td>
             <td class="${qtyClass}">${book.availableQuantity} / ${book.quantity}</td>
             ${actionCell}
@@ -1031,6 +1234,114 @@ async function deleteBook(id) {
     }
 }
 
+// ---- Reviews Modal ----
+async function openReviewModal(bookId) {
+    currentReviewBookId = bookId;
+    selectedStarRating = 0;
+    const book = allBooks.find(b => b.id === bookId);
+    document.getElementById("reviewModalTitle").textContent = `Reviews — ${book ? book.title : ""}`;
+    document.getElementById("reviewComment").value = "";
+    document.getElementById("reviewFormMsg").textContent = "";
+    updateStarPicker();
+
+    document.getElementById("reviewFormSection").style.display = role === "MEMBER" ? "block" : "none";
+    document.getElementById("reviewModal").classList.add("open");
+
+    await loadReviewsIntoModal(bookId);
+}
+
+function closeReviewModal() {
+    document.getElementById("reviewModal").classList.remove("open");
+    currentReviewBookId = null;
+}
+
+function updateStarPicker() {
+    const spans = document.querySelectorAll("#starPicker span");
+    spans.forEach(span => {
+        const val = parseInt(span.dataset.value);
+        span.classList.toggle("selected", val <= selectedStarRating);
+    });
+}
+
+document.getElementById("starPicker").addEventListener("click", (e) => {
+    if (e.target.dataset.value) {
+        selectedStarRating = parseInt(e.target.dataset.value);
+        updateStarPicker();
+    }
+});
+
+async function loadReviewsIntoModal(bookId) {
+    const listEl = document.getElementById("reviewsList");
+    listEl.innerHTML = `<p class="empty-state">Loading reviews...</p>`;
+    try {
+        const response = await fetch(`${API_BASE}/api/reviews/book/${bookId}`, {
+            headers: { "Authorization": getAuthHeader() }
+        });
+        if (!response.ok) {
+            listEl.innerHTML = `<p class="empty-state">Could not load reviews.</p>`;
+            return;
+        }
+        const reviews = await response.json();
+        if (reviews.length === 0) {
+            listEl.innerHTML = `<p class="empty-state">No reviews yet. Be the first!</p>`;
+            return;
+        }
+        listEl.innerHTML = "";
+        reviews.forEach(r => {
+            const div = document.createElement("div");
+            div.className = "review-item";
+            div.innerHTML = `
+                <div class="review-user">${escapeHtml(r.user.username)} ${starHtml(r.rating)}</div>
+                ${r.comment ? `<div class="review-comment">${escapeHtml(r.comment)}</div>` : ""}
+            `;
+            listEl.appendChild(div);
+        });
+    } catch (err) {
+        listEl.innerHTML = `<p class="empty-state">Could not load reviews.</p>`;
+    }
+}
+
+async function submitReview() {
+    const msgEl = document.getElementById("reviewFormMsg");
+    msgEl.style.color = "#d64545";
+
+    if (selectedStarRating < 1) {
+        msgEl.textContent = "Please select a star rating.";
+        return;
+    }
+    if (!currentUserId) {
+        msgEl.textContent = "Could not determine your user ID.";
+        return;
+    }
+
+    const comment = document.getElementById("reviewComment").value.trim();
+
+    try {
+        const response = await fetch(`${API_BASE}/api/reviews?userId=${currentUserId}&bookId=${currentReviewBookId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": getAuthHeader()
+            },
+            body: JSON.stringify({ rating: selectedStarRating, comment })
+        });
+
+        if (response.ok) {
+            msgEl.style.color = "#2f9e44";
+            msgEl.textContent = "Review submitted!";
+            await loadReviewsIntoModal(currentReviewBookId);
+            await loadAllRatings();
+            applyFilterAndRender();
+            renderTrending();
+        } else {
+            const data = await response.json().catch(() => null);
+            msgEl.textContent = (data && (data.error || Object.values(data)[0])) || "Failed to submit review.";
+        }
+    } catch (err) {
+        msgEl.textContent = "Error connecting to server.";
+    }
+}
+
 function logout() {
     sessionStorage.clear();
     window.location.href = "login.html";
@@ -1056,3 +1367,4 @@ init();
 
 </body>
 </html>
+ss
