@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
                 .requestMatchers("/api/books/**").hasAnyRole("ADMIN", "MEMBER")
                 .requestMatchers("/api/reviews/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers("/api/reservations/**").hasAnyRole("ADMIN", "MEMBER")
                 .anyRequest().authenticated()
             )
             .httpBasic(basic -> {});
