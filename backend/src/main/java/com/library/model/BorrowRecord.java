@@ -31,6 +31,12 @@ public class BorrowRecord {
     @Column(nullable = false)
     private String status = "BORROWED";
 
+    @Column(name = "fine_amount")
+    private Double fineAmount = 0.0;
+
+    @Column(name = "fine_paid")
+    private Boolean finePaid = false;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -52,4 +58,10 @@ public class BorrowRecord {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Double getFineAmount() { return fineAmount; }
+    public void setFineAmount(Double fineAmount) { this.fineAmount = fineAmount; }
+
+    public Boolean getFinePaid() { return finePaid; }
+    public void setFinePaid(Boolean finePaid) { this.finePaid = finePaid; }
 }

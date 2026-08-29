@@ -42,6 +42,15 @@ public BorrowRecord borrowBook(@RequestParam Long userId, @RequestParam Long boo
             .orElseThrow(() -> new RuntimeException("User not found with id " + userId));
     Book book = bookRepository.findById(bookId)
             .orElseThrow(() -> new RuntimeException("Book not found with id " + bookId));
+    double unpaidFines = borrowRecordRepository.findAll().stream()
+            .filter(r -> r.getUser().getId().equals(userId))
+            .filter(r -> !Boolean.TRUE.equals(r.getFinePaid()))
+            .mapToDouble(BorrowRecord::getFineAmount)
+            .sum();
+
+    if (unpaidFines > 0) {
+        throw new RuntimeException("You have unpaid fines of ₹" + unpaidFines + ". Please clear them before borrowing more books.");
+    }
 
     if (book.getAvailableQuantity() <= 0) {
         throw new RuntimeException("No copies available for this book");
@@ -69,13 +78,21 @@ public BorrowRecord borrowBook(@RequestParam Long userId, @RequestParam Long boo
 }
 
     // Return a book
-    @PutMapping("/return/{recordId}")
+   @PutMapping("/return/{recordId}")
 public BorrowRecord returnBook(@PathVariable Long recordId) {
     BorrowRecord record = borrowRecordRepository.findById(recordId)
             .orElseThrow(() -> new RuntimeException("Borrow record not found with id " + recordId));
 
-    record.setReturnDate(LocalDate.now());
+    LocalDate today = LocalDate.now();
+    record.setReturnDate(today);
     record.setStatus("RETURNED");
+
+    // Calculate fine if returned late
+    if (today.isAfter(record.getDueDate())) {
+        long daysLate = java.time.temporal.ChronoUnit.DAYS.between(record.getDueDate(), today);
+        double fine = daysLate * 10.0; // ₹10 per day late
+        record.setFineAmount(fine);
+    }
 
     Book book = record.getBook();
     book.setAvailableQuantity(book.getAvailableQuantity() + 1);
@@ -89,6 +106,25 @@ public BorrowRecord returnBook(@PathVariable Long recordId) {
         reservationRepository.save(next);
     }
 
+    return borrowRecordRepository.save(record);
+    }
+    // Get total unpaid fines for a user
+   @GetMapping("/unpaid-fines/{userId}")
+public Double getUnpaidFines(@PathVariable Long userId) {
+    List<BorrowRecord> records = borrowRecordRepository.findAll();
+    return records.stream()
+            .filter(r -> r.getUser().getId().equals(userId))
+            .filter(r -> !Boolean.TRUE.equals(r.getFinePaid()))
+            .mapToDouble(BorrowRecord::getFineAmount)
+            .sum();
+}
+
+// Mark a specific fine as paid (admin only)
+   @PutMapping("/{recordId}/pay-fine")
+public BorrowRecord payFine(@PathVariable Long recordId) {
+    BorrowRecord record = borrowRecordRepository.findById(recordId)
+            .orElseThrow(() -> new RuntimeException("Borrow record not found with id " + recordId));
+    record.setFinePaid(true);
     return borrowRecordRepository.save(record);
 }
 }

@@ -147,6 +147,14 @@
     <p id="statusMsg"></p>
 </div>
 
+<div class="card" id="finesPanel" style="display:none;">
+    <h3>💰 Outstanding Fines</h3>
+    <table style="margin-top: 14px;">
+        <thead><tr><th>Member</th><th>Book</th><th>Due Date</th><th>Returned</th><th>Fine</th><th>Action</th></tr></thead>
+        <tbody id="finesTableBody"></tbody>
+    </table>
+</div>
+
 <div class="card" id="usersPanel" style="display:none;">
     <div class="card-header-row">
         <h3>Registered Users</h3>
@@ -169,8 +177,9 @@
 
 <div class="card" id="myBooksPanel" style="display:none;">
     <h3>My Borrowed Books</h3>
+    <p id="myFinesMsg" style="font-size:13px; margin-bottom:10px;"></p>
     <table style="margin-top: 14px;">
-        <thead><tr><th>Title</th><th>Borrow Date</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
+        <thead><tr><th>Title</th><th>Borrow Date</th><th>Due Date</th><th>Status</th><th>Fine</th><th>Action</th></tr></thead>
         <tbody id="myBooksTableBody"></tbody>
     </table>
 </div>
@@ -243,6 +252,7 @@ document.getElementById("roleBadge").textContent = role;
 if (role === "ADMIN") {
     document.getElementById("adminPanel").style.display = "block";
     document.getElementById("usersPanel").style.display = "block";
+    document.getElementById("finesPanel").style.display = "block";
     document.getElementById("statsRow").style.display = "grid";
 }
 if (role === "MEMBER") {
@@ -561,6 +571,33 @@ function clearSearch() {
     applyFilterAndRender();
 }
 
+async function loadOutstandingFines() {
+    if (role !== "ADMIN") return;
+    try {
+        const response = await fetch(`${API_BASE}/api/borrow`, { headers: { "Authorization": getAuthHeader() } });
+        if (!response.ok) return;
+        const records = await response.json();
+        const unpaid = records.filter(r => r.fineAmount > 0 && !r.finePaid);
+        const tbody = document.getElementById("finesTableBody");
+        tbody.innerHTML = "";
+        if (unpaid.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No outstanding fines. 🎉</td></tr>`; return; }
+        unpaid.forEach(r => {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${escapeHtml(r.user.username)}</td><td>${escapeHtml(r.book.title)}</td><td>${r.dueDate}</td><td>${r.returnDate || "-"}</td><td style="color: var(--error); font-weight:600;">₹${r.fineAmount}</td><td><button class="save-btn" onclick="markFinePaid(${r.id})">Mark Paid</button></td>`;
+            tbody.appendChild(row);
+        });
+    } catch (err) { console.error("Could not load fines", err); }
+}
+
+async function markFinePaid(recordId) {
+    if (!confirm("Mark this fine as paid?")) return;
+    try {
+        const response = await fetch(`${API_BASE}/api/borrow/${recordId}/pay-fine`, { method: "PUT", headers: { "Authorization": getAuthHeader() } });
+        if (response.ok) { await loadOutstandingFines(); }
+        else { alert("Failed to mark fine as paid."); }
+    } catch (err) { alert("Error connecting to server."); }
+}
+
 async function loadMyBorrowedBooks() {
     if (role !== "MEMBER") return;
     try {
@@ -568,12 +605,28 @@ async function loadMyBorrowedBooks() {
         if (!response.ok) return;
         const records = await response.json();
         const myRecords = records.filter(r => r.user.id === currentUserId && r.status === "BORROWED");
+        const myAllRecords = records.filter(r => r.user.id === currentUserId);
+
+        const unpaidTotal = myAllRecords
+            .filter(r => !r.finePaid && r.fineAmount > 0)
+            .reduce((sum, r) => sum + r.fineAmount, 0);
+
+        const finesMsgEl = document.getElementById("myFinesMsg");
+        if (unpaidTotal > 0) {
+            finesMsgEl.innerHTML = `<span style="color: var(--error); font-weight:600;">⚠ You have ₹${unpaidTotal} in unpaid fines. You cannot borrow new books until this is cleared.</span>`;
+        } else {
+            finesMsgEl.textContent = "";
+        }
+
         const tbody = document.getElementById("myBooksTableBody");
         tbody.innerHTML = "";
-        if (myRecords.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No books currently borrowed.</td></tr>`; return; }
+        if (myRecords.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No books currently borrowed.</td></tr>`; return; }
         myRecords.forEach(record => {
             const row = document.createElement("tr");
-            row.innerHTML = `<td>${escapeHtml(record.book.title)}</td><td>${record.borrowDate}</td><td>${record.dueDate}</td><td><span class="status-pill">${record.status}</span></td><td><button class="return-btn" onclick="returnBook(${record.id})">Return</button></td>`;
+            const fineCell = record.fineAmount > 0
+                ? `<span style="color: var(--error); font-weight:600;">₹${record.fineAmount}${record.finePaid ? " (paid)" : ""}</span>`
+                : "-";
+            row.innerHTML = `<td>${escapeHtml(record.book.title)}</td><td>${record.borrowDate}</td><td>${record.dueDate}</td><td><span class="status-pill">${record.status}</span></td><td>${fineCell}</td><td><button class="return-btn" onclick="returnBook(${record.id})">Return</button></td>`;
             tbody.appendChild(row);
         });
     } catch (err) { console.error("Could not load borrowed books", err); }
@@ -584,7 +637,15 @@ async function borrowBook(bookId) {
     try {
         const response = await fetch(`${API_BASE}/api/borrow/borrow?userId=${currentUserId}&bookId=${bookId}`, { method: "POST", headers: { "Authorization": getAuthHeader() } });
         if (response.ok) { await loadMyActiveBorrows(); await loadMyReservations(); await loadBooks(); loadMyBorrowedBooks(); }
-        else { const errorText = await response.text(); alert("Failed to borrow book: " + errorText); }
+        else {
+            const errorText = await response.text();
+            let message = errorText;
+            try {
+                const parsed = JSON.parse(errorText);
+                message = parsed.error || errorText;
+            } catch (e) {}
+            alert("Failed to borrow book: " + message);
+        }
     } catch (err) { alert("Error connecting to server."); }
 }
 
@@ -592,7 +653,10 @@ async function returnBook(recordId) {
     try {
         const response = await fetch(`${API_BASE}/api/borrow/return/${recordId}`, { method: "PUT", headers: { "Authorization": getAuthHeader() } });
         if (response.ok) { await loadMyActiveBorrows(); await loadMyReservations(); await loadBooks(); loadMyBorrowedBooks(); }
-        else { alert("Failed to return book."); }
+        else {
+            const errorText = await response.text();
+            alert("Failed to return book: " + errorText);
+        }
     } catch (err) { alert("Error connecting to server."); }
 }
 
@@ -703,7 +767,7 @@ async function submitReview() {
 function logout() { sessionStorage.clear(); window.location.href = "login.html"; }
 
 async function init() {
-    if (role === "ADMIN") { await loadUsers(); renderUserStatsAndTable(); }
+    if (role === "ADMIN") { await loadUsers(); renderUserStatsAndTable(); await loadOutstandingFines(); }
     if (role === "MEMBER") { currentUserId = await findCurrentUserId(); await loadMyReservations(); await loadMyActiveBorrows(); }
     await loadBooks();
     if (role === "ADMIN") { renderUserStatsAndTable(); }

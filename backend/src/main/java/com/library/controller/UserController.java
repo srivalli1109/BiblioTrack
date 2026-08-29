@@ -57,4 +57,12 @@ public class UserController {
         userRepository.deleteById(id);
         return "User deleted with id: " + id;
     }
+    @PutMapping("/{id}/reset-password")
+    public String resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User not found with id " + id));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return "Password reset successfully for user: " + user.getUsername();
+}
 }
