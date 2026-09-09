@@ -7,3 +7,9 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 
 server.port=8080
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=YOUR_EMAIL_HERE
+spring.mail.password=YOUR_APP_PASSWORD_HERE
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true

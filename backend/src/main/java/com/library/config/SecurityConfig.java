@@ -69,6 +69,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/books/**").hasAnyRole("ADMIN", "MEMBER")
                 .requestMatchers("/api/reviews/**").hasAnyRole("ADMIN", "MEMBER")
                 .requestMatchers("/api/reservations/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers("/api/test-email").hasRole("ADMIN")
+                .requestMatchers("/api/reminders/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .httpBasic(basic -> {});
