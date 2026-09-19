@@ -170,11 +170,14 @@
         <p id="adminStatusMsg"></p>
     </div>
     <table style="margin-top: 14px;">
-        <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Last Login</th></tr></thead>
+        <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th></tr></thead>
         <tbody id="usersTableBody"></tbody>
     </table>
 </div>
-
+<div class="card" id="bannedBanner" style="display:none; background-color:#fde3e3; border-left:4px solid var(--error);">
+    <h3 style="color: var(--error); margin:0;">⚠ Account Suspended</h3>
+    <p style="margin: 8px 0 0; font-size:14px;">Your borrowing privileges are suspended due to a severely overdue book. Please contact the library or return your overdue book to restore access. You cannot borrow new books until this is resolved.</p>
+</div>
 <div class="card" id="myBooksPanel" style="display:none;">
     <h3>My Borrowed Books</h3>
     <p id="myFinesMsg" style="font-size:13px; margin-bottom:10px;"></p>
@@ -328,10 +331,14 @@ async function loadUsers() {
     } catch (err) { return null; }
 }
 
+let currentUserBanned = false;
+
 async function findCurrentUserId() {
     const users = allUsers.length ? allUsers : await loadUsers();
     if (!users) return null;
     const me = users.find(u => u.username === username);
+    currentUserBanned = me ? Boolean(me.banned) : false;
+    document.getElementById("bannedBanner").style.display = currentUserBanned ? "block" : "none";
     return me ? me.id : null;
 }
 
@@ -355,9 +362,13 @@ function renderUserStatsAndTable() {
     sorted.forEach(u => {
         const row = document.createElement("tr");
         const roleClass = u.role === "ADMIN" ? "admin" : "member";
-        row.innerHTML = `<td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.email)}</td><td><span class="role-pill ${roleClass}">${u.role}</span></td><td>${formatLastLogin(u.lastLogin)}</td>`;
+        const statusCell = u.banned
+            ? `<span class="status-pill" style="background-color:#fde3e3; color:var(--error);">BANNED</span>`
+            : `<span class="status-pill" style="background-color:#e3f7e8; color:var(--success);">Active</span>`;
+        row.innerHTML = `<td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.email)}</td><td><span class="role-pill ${roleClass}">${u.role}</span></td><td>${statusCell}</td><td>${formatLastLogin(u.lastLogin)}</td>`;
         tbody.appendChild(row);
     });
+    
 }
 
 function populateGenreDropdown() {

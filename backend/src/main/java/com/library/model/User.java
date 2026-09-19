@@ -33,6 +33,9 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    @Column(nullable = false)
+    private Boolean banned = false;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -51,4 +54,7 @@ public class User {
 
     public LocalDateTime getLastLogin() { return lastLogin; }
     public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
+
+    public Boolean getBanned() { return banned; }
+    public void setBanned(Boolean banned) { this.banned = banned; }
 }

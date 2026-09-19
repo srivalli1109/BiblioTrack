@@ -16,4 +16,9 @@ public class ReminderController {
         reminderService.sendDueDateReminders();
         return "Reminder check completed. Emails sent to any members with books due tomorrow.";
     }
+    @PostMapping("/trigger-bans")
+    public String triggerBans() { 
+        reminderService.banOverdueUsers();
+        return "Ban check completed. Users with books 7+ days overdue have been suspended.";
+}
 }
