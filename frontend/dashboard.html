@@ -109,6 +109,17 @@
     .review-item:last-child { border-bottom: none; }
     .review-item .review-user { font-weight: 600; font-size: 13px; }
     .review-item .review-comment { font-size: 13px; color: var(--text); margin-top: 2px; }
+    .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), #e0c158);
+    color: var(--primary-dark);
+}
 </style>
 </head>
 <body>
@@ -178,6 +189,25 @@
     <h3 style="color: var(--error); margin:0;">⚠ Account Suspended</h3>
     <p style="margin: 8px 0 0; font-size:14px;">Your borrowing privileges are suspended due to a severely overdue book. Please contact the library or return your overdue book to restore access. You cannot borrow new books until this is resolved.</p>
 </div>
+<div class="card" id="readingStatsPanel" style="display:none;">
+    <h3>📊 My Reading Stats</h3>
+    <div class="stats-row" style="margin-top:14px;">
+        <div class="stat-card">
+            <div class="stat-value" id="statsBooksRead">-</div>
+            <div class="stat-label">Books Read</div>
+        </div>
+        <div class="stat-card accent">
+            <div class="stat-value" id="statsCurrentStreak">-</div>
+            <div class="stat-label">Current Streak 🔥</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statsLongestStreak">-</div>
+            <div class="stat-label">Best Streak</div>
+        </div>
+    </div>
+    <div id="statsBadges" style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+</div>
+
 <div class="card" id="myBooksPanel" style="display:none;">
     <h3>My Borrowed Books</h3>
     <p id="myFinesMsg" style="font-size:13px; margin-bottom:10px;"></p>
@@ -261,6 +291,7 @@ if (role === "ADMIN") {
 if (role === "MEMBER") {
     document.getElementById("myBooksPanel").style.display = "block";
     document.getElementById("myReservationsPanel").style.display = "block";
+    document.getElementById("readingStatsPanel").style.display = "block";
 }
 
 function getAuthHeader() { return "Basic " + btoa(`${username}:${password}`); }
@@ -663,7 +694,7 @@ async function borrowBook(bookId) {
 async function returnBook(recordId) {
     try {
         const response = await fetch(`${API_BASE}/api/borrow/return/${recordId}`, { method: "PUT", headers: { "Authorization": getAuthHeader() } });
-        if (response.ok) { await loadMyActiveBorrows(); await loadMyReservations(); await loadBooks(); loadMyBorrowedBooks(); }
+        if (response.ok) { await loadMyActiveBorrows(); await loadMyReservations(); await loadBooks(); loadMyBorrowedBooks(); loadReadingStats(); }
         else {
             const errorText = await response.text();
             alert("Failed to return book: " + errorText);
@@ -779,10 +810,36 @@ function logout() { sessionStorage.clear(); window.location.href = "login.html";
 
 async function init() {
     if (role === "ADMIN") { await loadUsers(); renderUserStatsAndTable(); await loadOutstandingFines(); }
-    if (role === "MEMBER") { currentUserId = await findCurrentUserId(); await loadMyReservations(); await loadMyActiveBorrows(); }
+    if (role === "MEMBER") { currentUserId = await findCurrentUserId(); await loadMyReservations(); await loadMyActiveBorrows(); await loadReadingStats(); }
     await loadBooks();
     if (role === "ADMIN") { renderUserStatsAndTable(); }
     await loadMyBorrowedBooks();
+}
+async function loadReadingStats() {
+    if (role !== "MEMBER" || !currentUserId) return;
+    try {
+        const response = await fetch(`${API_BASE}/api/borrow/stats/${currentUserId}`, { headers: { "Authorization": getAuthHeader() } });
+        if (!response.ok) return;
+        const stats = await response.json();
+
+        document.getElementById("statsBooksRead").textContent = stats.totalBooksRead;
+        document.getElementById("statsCurrentStreak").textContent = stats.currentStreak;
+        document.getElementById("statsLongestStreak").textContent = stats.longestStreak;
+
+        const badgesEl = document.getElementById("statsBadges");
+        if (stats.badges.length === 0) {
+            badgesEl.innerHTML = `<span class="rating-count">No badges yet — return your first book on time to start earning them!</span>`;
+        } else {
+            const badgeIcons = {
+                "First Book": "🥉",
+                "Bookworm": "📖",
+                "Page Turner": "📚",
+                "Library Legend": "🏆",
+                "Perfect Returner": "🔥"
+            };
+            badgesEl.innerHTML = stats.badges.map(b => `<span class="badge-pill">${badgeIcons[b] || "🎖"} ${b}</span>`).join("");
+        }
+    } catch (err) { console.error("Could not load reading stats", err); }
 }
 
 init();

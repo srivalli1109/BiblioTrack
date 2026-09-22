@@ -148,4 +148,48 @@ public class BorrowRecordController {
         record.setFinePaid(true);
         return borrowRecordRepository.save(record);
     }
+    // Get reading stats (streaks + badges) for a user
+    @GetMapping("/stats/{userId}")
+    public java.util.Map<String, Object> getReadingStats(@PathVariable Long userId) {
+        List<BorrowRecord> records = borrowRecordRepository.findAll().stream()
+            .filter(r -> r.getUser().getId().equals(userId))
+            .filter(r -> "RETURNED".equals(r.getStatus()))
+            .sorted(java.util.Comparator.comparing(BorrowRecord::getReturnDate))
+            .toList();
+
+    int totalBooksRead = records.size();
+
+    int currentStreak = 0;
+    for (int i = records.size() - 1; i >= 0; i--) {
+        double fine = records.get(i).getFineAmount() == null ? 0 : records.get(i).getFineAmount();
+        if (fine > 0) break;
+        currentStreak++;
+    }
+
+    int longestStreak = 0;
+    int running = 0;
+    for (BorrowRecord r : records) {
+        double fine = r.getFineAmount() == null ? 0 : r.getFineAmount();
+        if (fine > 0) {
+            running = 0;
+        } else {
+            running++;
+            longestStreak = Math.max(longestStreak, running);
+        }
+    }
+
+    List<String> badges = new java.util.ArrayList<>();
+    if (totalBooksRead >= 1) badges.add("First Book");
+    if (totalBooksRead >= 5) badges.add("Bookworm");
+    if (totalBooksRead >= 15) badges.add("Page Turner");
+    if (totalBooksRead >= 30) badges.add("Library Legend");
+    if (currentStreak >= 5) badges.add("Perfect Returner");
+
+    java.util.Map<String, Object> stats = new java.util.HashMap<>();
+    stats.put("totalBooksRead", totalBooksRead);
+    stats.put("currentStreak", currentStreak);
+    stats.put("longestStreak", longestStreak);
+    stats.put("badges", badges);
+    return stats;
+}
 }
