@@ -23,6 +23,8 @@ public class AuthController {
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest loginRequest) {
         Optional<User> userOpt = userRepository.findByUsername(loginRequest.getUsername());
+        System.out.println("Login username: " + loginRequest.getUsername());
+        System.out.println("User found: " + userOpt.isPresent());
 
         if (userOpt.isEmpty()) {
             return "Invalid username or password";
