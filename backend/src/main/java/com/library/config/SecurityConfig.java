@@ -54,26 +54,66 @@ public class SecurityConfig {
     }
 
     @Bean
+   
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/create-admin").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/users/*/reset-password").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/books/**").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/books/**").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
-                .requestMatchers("/api/books/**").hasAnyRole("ADMIN", "MEMBER")
-                .requestMatchers("/api/reviews/**").hasAnyRole("ADMIN", "MEMBER")
-                .requestMatchers("/api/reservations/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.POST,
+                    "/api/users/create-admin"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.PUT,
+                    "/api/users/*/reset-password"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.POST,
+                    "/api/users"
+                ).permitAll()
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.POST,
+                    "/api/books/**"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.PUT,
+                    "/api/books/**"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                    org.springframework.http.HttpMethod.DELETE,
+                    "/api/**"
+                ).hasRole("ADMIN")
+                .requestMatchers("/api/books/**")
+                    .hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers("/api/reviews/**")
+                    .hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers("/api/reservations/**")
+                    .hasAnyRole("ADMIN", "MEMBER")
                 .requestMatchers("/api/test-email").hasRole("ADMIN")
                 .requestMatchers("/api/reminders/**").hasRole("ADMIN")
+
+                // Allow common frontend page URLs
+                .requestMatchers(
+                    "/", "/index.html", "/login.html",
+                    "/signup.html", "/dashboard.html",
+                    "/css/**", "/js/**", "/images/**",
+                    "/favicon.ico"
+                ).permitAll()
+
                 .anyRequest().authenticated()
             )
-            .httpBasic(basic -> {});
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, exception) ->
+                    response.sendError(
+                        jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED
+                    )
+                )
+            );
+
         return http.build();
     }
+
 }
