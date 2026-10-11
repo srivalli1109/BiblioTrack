@@ -53,7 +53,6 @@ public class SecurityConfig {
         return source;
     }
 
-    @Bean
    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -94,15 +93,12 @@ public class SecurityConfig {
                     .hasAnyRole("ADMIN", "MEMBER")
                 .requestMatchers("/api/test-email").hasRole("ADMIN")
                 .requestMatchers("/api/reminders/**").hasRole("ADMIN")
-
-                // Allow common frontend page URLs
                 .requestMatchers(
                     "/", "/index.html", "/login.html",
                     "/signup.html", "/dashboard.html",
                     "/css/**", "/js/**", "/images/**",
                     "/favicon.ico"
                 ).permitAll()
-
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
@@ -115,5 +111,6 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
 }
