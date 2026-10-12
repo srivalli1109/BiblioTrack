@@ -73,49 +73,44 @@ public class SecurityConfig {
 
         http
             .cors(cors ->
-                    cors.configurationSource(corsConfigurationSource())
+                cors.configurationSource(corsConfigurationSource())
             )
             .csrf(csrf -> csrf.disable())
+
+            // Accept the Basic Authorization header sent by dashboard.html
+            .httpBasic(basic -> {})
+
             .authorizeHttpRequests(auth -> auth
 
                 // Allow browser CORS preflight requests
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Public authentication endpoints
+                // Public login endpoint
                 .requestMatchers("/api/auth/**").permitAll()
+
+                // Public member registration
+                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
                 // Admin-only user management
                 .requestMatchers(
-                        HttpMethod.POST,
-                        "/api/users/create-admin"
+                    HttpMethod.POST, "/api/users/create-admin"
                 ).hasRole("ADMIN")
 
                 .requestMatchers(
-                        HttpMethod.PUT,
-                        "/api/users/*/reset-password"
+                    HttpMethod.PUT, "/api/users/*/reset-password"
                 ).hasRole("ADMIN")
 
-                // Allow public registration
+                // Admin-only book changes
                 .requestMatchers(
-                        HttpMethod.POST,
-                        "/api/users"
-                ).permitAll()
-
-                // Admin-only book modifications
-                .requestMatchers(
-                        HttpMethod.POST,
-                        "/api/books/**"
+                    HttpMethod.POST, "/api/books/**"
                 ).hasRole("ADMIN")
 
                 .requestMatchers(
-                        HttpMethod.PUT,
-                        "/api/books/**"
+                    HttpMethod.PUT, "/api/books/**"
                 ).hasRole("ADMIN")
 
-                // Admin-only delete operations
                 .requestMatchers(
-                        HttpMethod.DELETE,
-                        "/api/**"
+                    HttpMethod.DELETE, "/api/**"
                 ).hasRole("ADMIN")
 
                 // Book browsing
@@ -130,7 +125,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/reservations/**")
                     .hasAnyRole("ADMIN", "MEMBER")
 
-                // Admin-only email testing and reminders
+                // Admin-only email and reminders
                 .requestMatchers("/api/test-email")
                     .hasRole("ADMIN")
 
@@ -139,20 +134,21 @@ public class SecurityConfig {
 
                 // Public frontend resources
                 .requestMatchers(
-                        "/",
-                        "/index.html",
-                        "/login.html",
-                        "/signup.html",
-                        "/dashboard.html",
-                        "/css/**",
-                        "/js/**",
-                        "/images/**",
-                        "/favicon.ico"
+                    "/",
+                    "/index.html",
+                    "/login.html",
+                    "/signup.html",
+                    "/dashboard.html",
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/favicon.ico"
                 ).permitAll()
 
-                // Everything else requires authentication
+                // All other endpoints require authentication
                 .anyRequest().authenticated()
             )
+
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, exception) ->
                     response.sendError(
